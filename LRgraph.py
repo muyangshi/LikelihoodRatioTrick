@@ -6,18 +6,18 @@ from sbi.inference import NRE_A
 np.random.seed(1234)
 
 obs = np.random.normal(1.5, 1, 5)
-const = 1/np.sqrt(2*np.pi)
+const = -(len(obs)/2) * np.log(2*np.pi)
 
 #Normal with fixed sd = 1
-def likelihood(mu):
+def log_likelihood(mu):
     res = 1
     for x in obs:
-        res *= const * np.exp((-(x - mu)**2)/2)
-    return res
+        res += np.exp((x - mu)**2)
+    return (res/2) * const
 
 x_tr = np.linspace(0,5,100)
 
-llr = np.log(likelihood(x_tr)) - np.log(likelihood(1))
+llr = log_likelihood(x_tr) - log_likelihood(1)
 
 lr_true = np.exp(llr)
 
