@@ -1,6 +1,6 @@
 # %% ── 1. Imports ──────────────────────────────────────────────────────────────────
 import torch
-from sbi.inference import SNRE_B, NRE_A
+from sbi.inference import NRE_A
 from sbi.utils import BoxUniform
 import matplotlib.pyplot as plt
 
@@ -13,14 +13,14 @@ def simulator(theta: torch.Tensor) -> torch.Tensor:
     return theta + torch.randn_like(theta)           # σ = 1 fixed
 
 # Treat μ ∈ [−5, 5] as plausible a‑priori
-prior = BoxUniform(low=-5.*torch.ones(1), high=5.*torch.ones(1), device=device)
+prior = BoxUniform(low=-8.*torch.ones(1), high=8.*torch.ones(1), device=device)
 
 # %% ── 3. Generate training data ───────────────────────────────────────────────────
-num_sim = 10_000
+num_sim = 100_000
 theta_train = prior.sample((num_sim,))               # (N, 1)
 x_train     = simulator(theta_train)                 # (N, 1)
 
-# %% ── 4. Train SNRE‑B (single round, amortised) ───────────────────────────────────
+# %% ── 4. Train NRE‑A (single round, amortised) ───────────────────────────────────
 inference   = NRE_A(prior=prior, device=device)
 inference.append_simulations(theta_train, x_train)
 classifier  = inference.train()                     # returns the trained network   [oai_citation:0‡sbi-dev.github.io](https://sbi-dev.github.io/sbi/latest/tutorials/18_training_interface/)
@@ -77,7 +77,7 @@ plt.show()
 # (c) GOF
 fig, ax = plt.subplots()
 ax.set_aspect('equal', 'datalim')
-ax.scatter(log_like_true_norm.numpy(), log_r_norm.numpy())
+ax.scatter(log_like_true.numpy(), log_r.numpy())
 ax.axline((0, 0), slope=1, color='black', linestyle='--')
 ax.set_title(rf'Goodness of Fit')
 ax.set_xlabel('True log p(x|μ) (normalised)')
