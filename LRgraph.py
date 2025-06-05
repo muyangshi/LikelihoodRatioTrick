@@ -10,10 +10,10 @@ const = -(len(obs)/2) * np.log(2*np.pi)
 
 #Normal with fixed sd = 1
 def log_likelihood(mu):
-    res = 1
+    res = 0
     for x in obs:
-        res += np.exp((x - mu)**2)
-    return (res/2) * const
+        res += (x - mu)**2
+    return -(res/2) - const
 
 x_tr = np.linspace(0,5,100)
 
