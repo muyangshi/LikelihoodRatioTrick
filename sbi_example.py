@@ -13,17 +13,17 @@ def simulator(theta: torch.Tensor) -> torch.Tensor:
     return theta + torch.randn_like(theta)           # σ = 1 fixed
 
 # Treat μ ∈ [−5, 5] as plausible a‑priori
-prior = BoxUniform(low=-8.*torch.ones(1), high=8.*torch.ones(1), device=device)
+prior = BoxUniform(low=-5.*torch.ones(1), high=5.*torch.ones(1), device=device)
 
 # %% ── 3. Generate training data ───────────────────────────────────────────────────
-num_sim = 100_000
+num_sim = 10000
 theta_train = prior.sample((num_sim,))               # (N, 1)
 x_train     = simulator(theta_train)                 # (N, 1)
 
 # %% ── 4. Train NRE‑A (single round, amortised) ───────────────────────────────────
 inference   = NRE_A(prior=prior, device=device)
 inference.append_simulations(theta_train, x_train)
-classifier  = inference.train()                     # returns the trained network   [oai_citation:0‡sbi-dev.github.io](https://sbi-dev.github.io/sbi/latest/tutorials/18_training_interface/)
+classifier  = inference.train(training_batch_size=100)                     # returns the trained network   [oai_citation:0‡sbi-dev.github.io](https://sbi-dev.github.io/sbi/latest/tutorials/18_training_interface/)
 
 # %% ── 5. Build a log‑ratio estimator convenience wrapper ──────────────────────────
 # @torch.no_grad()
@@ -40,8 +40,8 @@ def log_r_hat(mu, x):
     return classifier(mu, x).squeeze(-1)
 
 # %% ── 6. Example: evaluate the likelihood ratio on a grid ─────────────────────────
-mu_grid   = torch.linspace(-4, 4, 200).unsqueeze(1)    # (200, 1)
-x_obs     = torch.tensor([[0.3]])                      # observed datum
+mu_grid   = torch.linspace(-4, 4, 200, device=device).unsqueeze(1)    # (200, 1)
+x_obs     = torch.tensor([[0.3]], device=device)                      # observed datum
 x_obs_rep = x_obs.expand(mu_grid.size(0), -1)
 
 log_r         = log_r_hat(mu_grid, x_obs_rep)                  # (200,)
@@ -53,8 +53,8 @@ log_like_true_norm = log_like_true - log_like_true.max()
 
 # (a) Overlay the two curves
 plt.figure()
-plt.plot(mu_grid.numpy(), log_like_true_norm.numpy(), label="True log p(x|μ)  (normalised)")
-plt.plot(mu_grid.numpy(), log_r_norm.numpy(),    label="Estimated log‑ratio (normalised)")
+plt.plot(mu_grid.cpu().numpy(), log_like_true_norm.cpu().numpy(), label="True log p(x|μ)  (normalised)")
+plt.plot(mu_grid.cpu().numpy(), log_r_norm.cpu().numpy(),    label="Estimated log‑ratio (normalised)")
 plt.xlabel("μ")
 plt.ylabel("log‑density (shifted)")
 plt.title("True vs. estimated log‑density curves")
@@ -63,9 +63,9 @@ plt.tight_layout()
 plt.show()
 
 # (b) Residuals (estimate – truth)
-residuals = (log_r_norm - log_like_true_norm).numpy()
+residuals = (log_r_norm - log_like_true_norm).cpu().numpy()
 plt.figure()
-plt.plot(mu_grid.numpy(), residuals, label="Residual")
+plt.plot(mu_grid.cpu().numpy(), residuals, label="Residual")
 plt.axhline(0, color='black', linestyle='--')
 plt.xlabel("μ")
 plt.ylabel("Residual")
