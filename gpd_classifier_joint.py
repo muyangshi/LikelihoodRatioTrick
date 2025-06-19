@@ -37,11 +37,12 @@ x_o = torch.tensor([0.1])
 ll_train = classifier(joint_grid, x_o.expand(torch.Size((1000, 1)))).squeeze(-1).detach().numpy()
 ll_true = -torch.log(sig_grid) - ((1/xi_grid) + 1) * (torch.log(sig_grid + xi_grid * x_o.item()) - torch.log(sig_grid))
 # %% The Plot
-title = "True LL against Trained LL, observed " + str(x_o.item())
-
 plt.scatter(ll_train, ll_true)
-plt.title(title)
+plt.title(f"True LL against Trained LL, observed {x_o.item()}")
 plt.xlabel("True Log Likelihood")
 plt.ylabel("Trained Log Likelihood")
 plt.show()
+# %% Saving the Model
+
+torch.save(classifier, "C:/Users/chase/OneDrive/Documents/Colorado State/Summer Research 25/ll_classifier.pt")
 # %%

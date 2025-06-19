@@ -27,7 +27,7 @@ inference.append_simulations(theta_train, x_train)
 classifier = inference.train()
 # %% The Log-Likelihoods
 xi_grid = torch.linspace(-0.5, 1, 100)
-x_o = torch.tensor([5.0])
+x_o = torch.tensor([0.5])
 
 ll_train = classifier(xi_grid.unsqueeze(1), x_o.expand(torch.Size((100, 1)))).squeeze(-1).detach().numpy()
 ll_true = -((1/xi_grid) + 1) * torch.log(1 + xi_grid * x_o.item())
